@@ -1,0 +1,16 @@
+# 输出目录 —— 所有分析结果、报告、中间文件
+out/
+
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
