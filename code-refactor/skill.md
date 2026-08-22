@@ -1,83 +1,78 @@
 ---
 name: code-refactor
-description: 系统化审计并重构代码库：发现架构坏味道、if-else 兜底逻辑、死代码/死字段、魔数、可扩展性缺口，然后制定并执行一次彻底且行为等价的重构。Use when 用户要求重构/重写、梳理架构、减少 if-else 堆叠、引入 DDD、消除死代码/魔数、做代码质量审计，或提到"扩展性/高内聚低耦合/单一职责/坏味道"。
+description: Systematically audit and refactor a codebase — find architectural smells, if-else band-aids, dead code/dead fields, magic numbers, and extensibility gaps, then plan and execute a thorough, behavior-preserving refactor. Use when the user asks to refactor/rewrite, tidy architecture, reduce if-else stacking, introduce DDD, eliminate dead code/magic numbers, run a code-quality audit, or mentions "extensibility / high cohesion low coupling / single responsibility / smells".
 ---
 
-# Code Refactor（系统化代码重构）
+# Code Refactor (systematic code refactoring)
 
-## 核心原则（改之前先认同这些）
+## Core principles (agree with these before changing anything)
 
-1. **根因优先，拒绝兜底**：发现"要不要加个 if-else / 特判 / 转换 / 兼容"的冲动时先停——
-   这个错误状态本应存在吗？能不能在离根因最近的地方消除它？只在数据源、上游、schema、
-   写入方修，不污染下游。若确实只能在下游兼容，必须写清"为什么"（历史包袱/无法改上游）。
-2. **优先第三方库、社区标准做法**：有现成库就不手搓。例：配置解析用标准 marshal/unmarshal，
-   而不是字符串匹配。
-3. **不多余判空**：必传参数在服务启动时校验一次；代码里已保证必传的，不再写无效判空。
-4. **等价优先**：重构前后行为必须等价。逻辑有不确定时，查主干（master/main）代码为准。
-5. **彻底，不留中间态**：不做半套方案、不保留"临时兼容层"。无效代码、无效字段、无效日志、
-   调试信息直接删，不注释保留。
-6. **结论来自代码，禁止脑补问题**：通读全部代码后逐条下结论；没有的问题不要硬编。
+1. **Root cause first, no band-aids**: When you feel the urge to "add an if-else / special-case / transform / compatibility shim", stop — should this error state even exist? Can it be eliminated closest to the root cause? Only fix at the data source, upstream, schema, or writer; never pollute the downstream. If you truly can only tolerate it downstream, you must document "why" (legacy burden / can't change upstream).
+2. **Prefer third-party libraries and community standards**: Use an existing library instead of reinventing. E.g., use standard marshal/unmarshal for config parsing, not string matching.
+3. **No redundant null checks**: Validate required params once at service startup; don't write useless null checks where the code already guarantees presence.
+4. **Equivalence first**: Behavior before and after refactor must be equivalent. When unsure, the main branch (master/main) code is the source of truth.
+5. **Be thorough, leave no half-states**: No half-baked solutions, no "temporary compatibility layer". Delete invalid code, fields, logs, and debug info outright — don't comment them out.
+6. **Conclusions come from code, never imagine problems**: Read all code, then conclude item by item; don't fabricate problems that don't exist.
 
-## 触发后先做：系统审计清单（读完全部代码再逐条打勾）
+## First step when triggered: system audit checklist (read all code, then tick each item)
 
-对每个模块/文件，依次回答：
+For each module/file, answer in order:
 
-### A. 架构与扩展性
-- [ ] 是否可扩展？新增一个"条件/页面/策略"是通过**扩展**（策略/注册表/插件/表驱动/多态）
-      实现，还是在已有函数里继续 **if-else 堆叠**？
-- [ ] 是否高内聚低耦合？模块职责是否清晰，是否出现"两个模块没对齐、各自产生冗余"？
-- [ ] 目录拆分是否合理？每个文件/函数行数是否合理？是否满足单一职责原则（SRP）？
+### A. Architecture & extensibility
+- [ ] Is it extensible? Adding a "condition/page/strategy" is done via **extension** (strategy/registry/plugin/table-driven/polymorphism) or via **if-else stacking** in an existing function?
+- [ ] Is it high cohesion / low coupling? Are module responsibilities clear, or do two modules drift apart and each produce redundant copies?
+- [ ] Is the directory split reasonable? Are file/function sizes reasonable? Does it satisfy single responsibility principle (SRP)?
 
-### B. 冗余与死代码
-- [ ] 有无未被使用的代码块 / 函数 / 类型？
-- [ ] 有无未被使用的字段？有无历史遗留导致的无效字段？
-- [ ] 每段代码在当前模块职责下是否有必要？（从整体架构角度判断，而非局部视角）
+### B. Redundancy & dead code
+- [ ] Any unused code blocks / functions / types?
+- [ ] Any unused fields? Any invalid fields left from history?
+- [ ] Is each piece of code necessary under the current module's responsibility? (Judge from the overall architecture, not a local view.)
 
-### C. 逻辑质量
-- [ ] 逻辑是否散乱、充满 if-else 堆叠？
-- [ ] 有无"未解决根本问题、靠 if-else 兜底"的代码？
-- [ ] 有无魔数？哪些能通过配置项或枚举消除？
-- [ ] 可读性如何？有无坏味道（长函数、神秘命名、重复逻辑、上帝对象…）？
-- [ ] 有无无效日志 / 监控 / 调试输出需要清理？
+### C. Logic quality
+- [ ] Is the logic scattered and full of if-else stacking?
+- [ ] Any code that "avoids the real problem and band-aids with if-else"?
+- [ ] Any magic numbers? Which can be removed via config items or enums?
+- [ ] How is readability? Any smells (long functions, mysterious naming, duplicated logic, god objects…)?
+- [ ] Any invalid logs / monitoring / debug output to clean up?
 
-## 重构工作流
+## Refactor workflow
 
-### Phase 1 — 审计（只读）
-- 通读该模块全部代码，不放过任何文件；用上面的清单逐条下结论。
-- 每条结论都指向具体代码位置；没有问题的项明确写"无"，不硬凑。
+### Phase 1 — Audit (read-only)
+- Read all code of the module, no file skipped; conclude each item using the checklist above.
+- Every conclusion points to a concrete code location; items with no problem are explicitly marked "none", not padded.
 
-### Phase 2 — 制定 Plan（先规划，后动手）
-- 输出分步骤、可独立验证、可回滚的详细 plan；大重构要拆细。
-- 每步明确"改什么、为什么、等价性如何保证、如何验证"。
-- 架构变更时同步考虑部署影响（如 Dockerfile、启动命令是否要跟着改）。
+### Phase 2 — Plan (plan before acting)
+- Output a step-by-step, independently verifiable, rollback-able plan; break large refactors into pieces.
+- Each step clearly states "what to change, why, how equivalence is guaranteed, how to verify".
+- When architecture changes, also consider deployment impact (e.g., does Dockerfile / startup command need to change).
 
-### Phase 3 — 执行
-- 按 plan 逐步落地，中间不等人确认；每步保持可回滚、可验证。
-- 等价重构优先；引入第三方库替代手写解析/逻辑。
-- 消除根因，删除死代码/死字段/无效日志，消除魔数。
-- 新增能力走扩展，不走 if-else 堆叠。
+### Phase 3 — Execute
+- Implement step by step per the plan, no waiting for confirmation mid-way; each step stays rollback-able and verifiable.
+- Prefer equivalence-preserving refactors; introduce third-party libraries to replace hand-written parsing/logic.
+- Eliminate root causes, delete dead code/dead fields/useless logs, remove magic numbers.
+- Add capabilities via extension, not if-else stacking.
 
-### Phase 4 — 验证
-- [ ] 构建通过（如 `make build`）
-- [ ] 单元测试通过，且为新增/改动逻辑补了测试
-- [ ] 行为与重构前等价（关键路径对拍/对照）
-- [ ] 部署链路可用（镜像能正常拉起）
-- [ ] 最终代码干净：无死代码、无调试信息、无多余判空
+### Phase 4 — Verify
+- [ ] Build passes (e.g., `make build`)
+- [ ] Unit tests pass, and tests added for new/changed logic
+- [ ] Behavior equivalent to pre-refactor (key-path diff/comparison)
+- [ ] Deployment chain usable (image can start normally)
+- [ ] Final code clean: no dead code, no debug info, no redundant null checks
 
-## 反模式（见到就拦）vs 正解
+## Anti-patterns (block on sight) vs correct solutions
 
-| 反模式 | 正解 |
+| Anti-pattern | Correct solution |
 | --- | --- |
-| 新增需求继续 `if a ... else if b ...` 堆叠 | 策略模式 / 注册表 / 表驱动 / 多态扩展 |
-| 配置用字符串匹配解析 | 标准库 marshal/unmarshal（如 prototext） |
-| 下游加一堆容错/特判吞上游的脏数据 | 修上游/数据源，或明确契约 |
-| 到处 `!= nil` / `!= 0` 无效判空 | 启动时校验必传，之后放心用 |
-| 保留注释掉的旧代码、调试 log | 直接删除，版本历史会兜底 |
-| 半套重构 + 兼容层共存 | 一次性改彻底 |
+| New requirement keeps stacking `if a ... else if b ...` | Strategy pattern / registry / table-driven / polymorphic extension |
+| Config parsed via string matching | Standard library marshal/unmarshal (e.g., prototext) |
+| Downstream adds a pile of tolerance/special-cases to swallow upstream dirty data | Fix upstream/data source, or define an explicit contract |
+| Pervasive `!= nil` / `!= 0` useless null checks | Validate required at startup, then trust it |
+| Keep commented-out old code, debug logs | Delete directly; version history has your back |
+| Half-refactor + compatibility layer coexisting | Change thoroughly in one pass |
 
-## 硬约束（不可妥协）
+## Hard constraints (non-negotiable)
 
-- 行为必须与现状等价；不确定就查主干代码。
-- 及时补单元测试，构建命令必须能验证。
-- 结论必须从实际代码出发，禁止臆造问题。
-- 架构变了必须同步评估部署。
+- Behavior must be equivalent to the current state; when unsure, check main-branch code.
+- Add unit tests promptly; the build command must be able to verify.
+- Conclusions must come from actual code; never fabricate problems.
+- Architecture changes must be accompanied by a deployment assessment.

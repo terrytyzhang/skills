@@ -1,49 +1,45 @@
 ---
 name: code-checker
-description: 编写新代码时的防退化护栏：从源头避免 if-else 堆叠、死代码/死字段、魔数、多余判空、手搓轮子、下游兜底等坏味道，让代码开箱即符合可扩展、单一职责、可读的规范。Use when 用户要求写新功能/新模块/新代码，或修改现有代码时，希望代码从一开始就干净、可扩展、无坏味道。
+description: Pre-write guardrail that prevents code from degrading — stop if-else stacking, dead code/dead fields, magic numbers, redundant null checks, reinventing the wheel, and downstream band-aids at the source, so code ships clean, extensible, single-responsibility, and readable. Use when the user asks to write new features/modules/code, or modify existing code, and wants it clean and extensible from the start.
 ---
 
-# Code Checker（写代码时防退化护栏）
+# Code Checker (pre-write anti-degradation guardrail)
 
-## 定位
+## Positioning
 
-`code-refactor` 是"事后审计重构"，本 skill 是"事前防退化"：在写代码的那一刻就把问题
-挡在门外，避免日后需要重构。每写一段新代码前，用下面的清单自检。
+`code-refactor` is "post-hoc audit & refactor"; this skill is "pre-write anti-degradation": it blocks problems at the moment you write code, avoiding the need to refactor later. Run the checklist below before writing any new code.
 
-## 写代码前必问（逐条自检）
+## Self-check before writing (go through each item)
 
-### 结构设计
-- [ ] 这段逻辑将来会不会"新增一个 X 就加一个 if/else"？如果会，改用策略/注册表/表驱动/多态，
-      让新增 = 扩展，而不是修改。
-- [ ] 这个类/函数是否符合单一职责？函数够短吗？命名能一眼看懂吗？
-- [ ] 模块边界清晰吗？有没有把本属于另一个模块的职责拉进来（将来会变成两处冗余）？
+### Structure design
+- [ ] Will this logic end up "add one more X → add one more if/else"? If so, switch to strategy/registry/table-driven/polymorphism, so adding = extension, not modification.
+- [ ] Does this class/function follow single responsibility? Is the function short enough? Is the naming self-explanatory?
+- [ ] Are module boundaries clear? Did you pull in responsibilities that belong to another module (which would later become two redundant copies)?
 
-### 数值与配置
-- [ ] 有没有裸魔数？应改为枚举或配置项。
-- [ ] 有没有在代码里写死的字符串/规则？能用配置或常量表表达吗？
+### Values & configuration
+- [ ] Any bare magic numbers? Replace with enums or config items.
+- [ ] Any hardcoded strings/rules? Can they be expressed via config or a constants table?
 
-### 判空与防御
-- [ ] 这个参数是必传吗？是 → 在入口/启动处校验一次，之后不再判空。
-- [ ] 这个判空是"真的可能为空"，还是"防御式写习惯了"？后者删掉。
+### Null checks & defense
+- [ ] Is this parameter required? If yes → validate once at the entrypoint/startup, then stop null-checking afterward.
+- [ ] Is this null check "truly can be null", or "defensive out of habit"? Delete the latter.
 
-### 轮子与库
-- [ ] 要做的这件事有没有成熟的第三方库/标准库/社区标准做法？有 → 直接用，不手搓。
+### Wheels & libraries
+- [ ] Is there a mature third-party library / standard library / community standard for this? If yes → use it directly, don't reinvent.
 
-### 根因 vs 兜底
-- [ ] 我现在是不是为了"兼容上游的脏数据/怪格式"而在下游加特判/转换？
-      是 → 先停：那个脏状态本应存在吗？去源头修，或明确契约，别在下游污染。
-- [ ] 我加的这个 if/else 或类型转换，会让读代码的人困惑"为什么要这么写"吗？
-      会 → 大概率是兜底，重新考虑。
+### Root cause vs band-aid
+- [ ] Are you adding a special-case/transform downstream just to "tolerate dirty/odd upstream data"? If yes → stop: should that dirty state even exist? Fix at the source, or define an explicit contract — don't pollute the downstream.
+- [ ] Will this if/else or type conversion make readers wonder "why is this written this way"? If yes → it's likely a band-aid, reconsider.
 
-### 干净度
-- [ ] 有没有顺手留下的调试 log / 注释掉的旧代码 / 临时代码？写完就删。
-- [ ] 有没有声明了但没用的字段、变量、导入？删掉。
+### Cleanliness
+- [ ] Any leftover debug logs / commented-out old code / temporary code? Delete when done.
+- [ ] Any declared-but-unused fields, variables, imports? Delete them.
 
-## 落地口诀
+## Cheat sheet
 
-1. 新增能力走扩展，别走 if-else。
-2. 有库用库，别造轮子。
-3. 必传在入口校验一次，之后不再防御。
-4. 想加特判先问根因，别在下游兜底。
-5. 写完删掉调试信息、死代码、魔数。
-6. 命名即文档，函数只做一件事。
+1. Add capabilities via extension, not if-else.
+2. Use libraries, don't reinvent wheels.
+3. Validate required params once at entry, then trust them.
+4. Before adding a special-case, ask the root cause — don't band-aid downstream.
+5. Delete debug info, dead code, and magic numbers when done.
+6. Naming is documentation; a function does one thing only.
