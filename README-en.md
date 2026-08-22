@@ -10,7 +10,7 @@ A personal collection of AI skills. Each top-level subdirectory is a skill, inst
 skills/
 ├── Makefile           # 自动发现并安装所有 skill / Auto-discovers & installs all skills
 ├── README.md
-├── code-checker/      # skill 示例 / example skill
+├── code-guardrail/    # skill 示例 / example skill
 ├── code-refactor/     # skill 示例 / example skill
 └── grill-me/          # skill 示例 / example skill
 ```

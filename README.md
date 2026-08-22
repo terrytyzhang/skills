@@ -11,7 +11,7 @@ skills/
 ├── Makefile           # Auto-discovers & installs all skills
 ├── README.md          # English (default)
 ├── README-zh.md       # Chinese
-├── code-checker/      # example skill
+├── code-guardrail/    # example skill
 ├── code-refactor/     # example skill
 └── grill-me/          # example skill
 ```

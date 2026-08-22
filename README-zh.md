@@ -11,7 +11,7 @@ skills/
 ├── Makefile           # 自动发现并安装所有 skill
 ├── README.md          # 英文版（默认）
 ├── README-zh.md       # 中文版
-├── code-checker/      # skill 示例
+├── code-guardrail/    # skill 示例
 ├── code-refactor/     # skill 示例
 └── grill-me/          # skill 示例
 ```
