@@ -1,0 +1,15 @@
+{
+  "name": "ai-skills",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal collection of AI skills, installable to multiple agents",
+  "type": "module",
+  "scripts": {
+    "install:codebuddy": "node scripts/install.mjs install codebuddy",
+    "install:workbuddy": "node scripts/install.mjs install workbuddy",
+    "install:codex": "node scripts/install.mjs install codex",
+    "install:all": "node scripts/install.mjs install all",
+    "clean": "node scripts/install.mjs clean",
+    "skills:list": "node scripts/install.mjs list"
+  }
+}

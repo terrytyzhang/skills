@@ -1,6 +1,6 @@
 # AI Skills Repository
 
-A personal collection of AI skills. Each top-level subdirectory is a skill, installed together via `make install`.
+A personal collection of AI skills. Each top-level subdirectory is a skill, installed via pnpm scripts.
 
 > 中文版请查看 [README-zh.md](./README-zh.md)
 
@@ -8,7 +8,8 @@ A personal collection of AI skills. Each top-level subdirectory is a skill, inst
 
 ```
 skills/
-├── Makefile           # Auto-discovers & installs all skills
+├── package.json       # pnpm scripts for install/clean/list
+├── scripts/install.mjs # Auto-discovers & installs all skills
 ├── README.md          # English (default)
 ├── README-zh.md       # Chinese
 ├── code-guardrail/    # example skill
@@ -21,32 +22,38 @@ Each skill directory must contain a `SKILL.md` (or `skill.md`) metadata file.
 ## Install
 
 ```bash
-# Install all skills to CodeBuddy and WorkBuddy
-make install
+# Install all skills to all supported agents (CodeBuddy / WorkBuddy / Codex)
+pnpm install:all
 
-# Install to CodeBuddy only
-make install-codebuddy
-
-# Install to WorkBuddy only
-make install-workbuddy
+# Install to a single agent
+pnpm install:codebuddy
+pnpm install:workbuddy
+pnpm install:codex
 ```
+
+Supported agents and their install directories:
+
+| Agent | Directory |
+|------|------|
+| `codebuddy` | `~/.codebuddy/skills` |
+| `workbuddy` | `~/.workbuddy/skills` |
+| `codex` | `~/.codex/skills` |
 
 ## Other commands
 
 | Command | Description |
 |------|------|
-| `make install` | Install all skills |
-| `make clean` | Remove all installed skills |
-| `make list` | List skills in this repo |
+| `pnpm clean` | Remove all installed skills (with confirmation) |
+| `pnpm skills:list` | List skills in this repo and supported agents |
 
 ## How to add a new skill
 
-Simply create a subdirectory with a `SKILL.md` inside — no need to edit the Makefile or README:
+Simply create a subdirectory with a `SKILL.md` inside — no need to edit any config:
 
 ```bash
 mkdir my-skill
 touch my-skill/SKILL.md
-make install
+pnpm install:all
 ```
 
-The Makefile auto-discovers all top-level subdirectories and installs them.
+The install script auto-discovers all top-level subdirectories containing a `SKILL.md` (or `skill.md`) and installs them.

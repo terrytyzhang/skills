@@ -1,18 +1,19 @@
 # AI Skills 仓库 / AI Skills Repository
 
-个人 AI 技能集合。每个顶层子目录即一个 skill，统一用 `make install` 安装。
+个人 AI 技能集合。每个顶层子目录即一个 skill，通过 pnpm scripts 安装。
 
-A personal collection of AI skills. Each top-level subdirectory is a skill, installed together via `make install`.
+A personal collection of AI skills. Each top-level subdirectory is a skill, installed via pnpm scripts.
 
 ## 目录结构 / Directory structure
 
 ```
 skills/
-├── Makefile           # 自动发现并安装所有 skill / Auto-discovers & installs all skills
+├── package.json        # pnpm scripts：install / clean / list
+├── scripts/install.mjs # 自动发现并安装所有 skill / Auto-discovers & installs all skills
 ├── README.md
-├── code-guardrail/    # skill 示例 / example skill
-├── code-refactor/     # skill 示例 / example skill
-└── grill-me/          # skill 示例 / example skill
+├── code-guardrail/     # skill 示例 / example skill
+├── code-refactor/      # skill 示例 / example skill
+└── grill-me/           # skill 示例 / example skill
 ```
 
 每个 skill 目录内需包含 `SKILL.md`（或 `skill.md`）元数据文件。
@@ -22,39 +23,43 @@ Each skill directory must contain a `SKILL.md` (or `skill.md`) metadata file.
 ## 安装 / Install
 
 ```bash
-# 安装所有 skill 到 CodeBuddy 和 WorkBuddy
-# Install all skills to CodeBuddy and WorkBuddy
-make install
+# 安装所有 skill 到所有支持的 agent（CodeBuddy / WorkBuddy / Codex）
+# Install all skills to all supported agents (CodeBuddy / WorkBuddy / Codex)
+pnpm install:all
 
-# 只安装到 CodeBuddy
-# Install to CodeBuddy only
-make install-codebuddy
-
-# 只安装到 WorkBuddy
-# Install to WorkBuddy only
-make install-workbuddy
+# 只安装到某个 agent / Install to a single agent
+pnpm install:codebuddy
+pnpm install:workbuddy
+pnpm install:codex
 ```
+
+支持的 agent 及安装目录 / Supported agents and their install directories:
+
+| Agent | 目录 Directory |
+|------|------|
+| `codebuddy` | `~/.codebuddy/skills` |
+| `workbuddy` | `~/.workbuddy/skills` |
+| `codex` | `~/.codex/skills` |
 
 ## 其他命令 / Other commands
 
 | 命令 Command | 说明 Description |
 |------|------|
-| `make install` | 安装所有 skill / Install all skills |
-| `make clean` | 清理已安装的 skill / Remove all installed skills |
-| `make list` | 列出当前仓库中的 skill / List skills in this repo |
+| `pnpm clean` | 清理已安装的 skill（需确认）/ Remove all installed skills (with confirmation) |
+| `pnpm skills:list` | 列出当前仓库中的 skill 和支持的 agent / List skills in this repo and supported agents |
 
 ## 如何新增 skill / How to add a new skill
 
-直接新建一个子目录并放入 `SKILL.md` 即可，无需修改 Makefile 或本文件：
+直接新建一个子目录并放入 `SKILL.md` 即可，无需修改任何配置：
 
-Simply create a subdirectory with a `SKILL.md` inside — no need to edit the Makefile or this file:
+Simply create a subdirectory with a `SKILL.md` inside — no need to edit any config:
 
 ```bash
 mkdir my-skill
 touch my-skill/SKILL.md
-make install
+pnpm install:all
 ```
 
-Makefile 会自动发现顶层所有子目录并安装。
+安装脚本会自动发现所有包含 `SKILL.md`（或 `skill.md`）的顶层子目录并安装。
 
-The Makefile auto-discovers all top-level subdirectories and installs them.
+The install script auto-discovers all top-level subdirectories containing a `SKILL.md` (or `skill.md`) and installs them.
